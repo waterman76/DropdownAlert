@@ -43,6 +43,8 @@ public class DropdownAlert: UIView {
     private lazy var messageLabel: UILabel = {
         let label = UILabel()
         label.textAlignment = .Center
+        label.lineBreakMode = .ByWordWrapping
+        label.numberOfLines = 0
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -149,6 +151,8 @@ public extension DropdownAlert {
             animatedConstraint.pop_addAnimation(animation, forKey: "show-dropdown")
 
             dropdown.performSelector(#selector(dismiss), withObject: nil, afterDelay: duration + Defaults.AnimationDuration)
+            
+            dropdown.addGestureRecognizer(UITapGestureRecognizer(target: dropdown, action: Selector("dismiss")))
         }
     }
 
