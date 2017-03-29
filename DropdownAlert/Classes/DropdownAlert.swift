@@ -3,17 +3,38 @@
 //  Pods
 //
 //  Created by Brendan Conron on 5/22/16.
-//
+//  Modified by Ivo Dimitrov and Yury Shubin
 //
 
 import UIKit
 import pop
+
+private class DropdownAlertHandler: NSObject, POPAnimationDelegate
+{
+	var completion: DropdownAlert.DropdownCompletionType?
+	
+	public func pop_animationDidStop(_ anim: POPAnimation!, finished: Bool)
+	{
+		//print("pop_animationDidStop finished: \(anim.name!)")
+		let type = DropdownAlert.PresentationType(rawValue: anim.name!)
+		completion?(type!)
+	}
+}
 
 /// Inspired by: https://github.com/cwRichardKim/RKDropdownAlert
 /// but that wasn't written in swift so...
 /// Plus, it's powered by pop!
 open class DropdownAlert: UIView {
 
+	public enum PresentationType: String
+	{
+		case show = "show"
+		case dismiss = "dismiss"
+	}
+
+	public typealias DropdownCompletionType = (_ type: PresentationType) -> Void
+	
+	fileprivate static let delegateHandler = DropdownAlertHandler()
     // MARK: - Animation
 
     /**
@@ -107,7 +128,7 @@ public extension DropdownAlert {
                                  message: String = Defaults.Message,
                                  backgroundColor: UIColor = Defaults.BackgroundColor,
                                  textColor: UIColor = Defaults.TextColor,
-                                 duration: Double = Defaults.Duration) {
+                                 duration: Double = Defaults.Duration, completion: DropdownCompletionType? = nil) {
         // Ensure that everything happens on the main queue
         DispatchQueue.main.async {
             let windows = UIApplication.shared.windows.filter { $0.windowLevel == UIWindowLevelNormal && !$0.isHidden }
@@ -148,11 +169,18 @@ public extension DropdownAlert {
 
             let animation = self.popAnimationForAnimationType(animationType)
             animation.toValue = Defaults.Height
+			animation.name = DropdownAlert.PresentationType.show.rawValue
+			animation.delegate = DropdownAlert.delegateHandler
+			DropdownAlert.delegateHandler.completion = completion
+			
             animatedConstraint.pop_add(animation, forKey: "show-dropdown")
 
-            dropdown.perform(#selector(dismiss), with: nil, afterDelay: duration + Defaults.AnimationDuration)
-            
-            dropdown.addGestureRecognizer(UITapGestureRecognizer(target: dropdown, action: #selector(DropdownAlert.dismiss)))
+			DispatchQueue.main.asyncAfter(deadline: .now() + duration + Defaults.AnimationDuration, execute:
+			{
+				dropdown.dismiss(completion: completion)
+			})
+			
+            dropdown.addGestureRecognizer(UITapGestureRecognizer(target: dropdown, action: #selector(DropdownAlert.dismissInternal)))
         }
     }
 
@@ -161,7 +189,7 @@ public extension DropdownAlert {
 
      - parameter dropdown: Dropdown object to dismiss.
      */
-    fileprivate class func dismissAlert(_ dropdown: DropdownAlert) {
+	fileprivate class func dismissAlert(_ dropdown: DropdownAlert, completion: DropdownCompletionType? = nil) {
         guard let window = dropdown.superview as? UIWindow else {
             return
         }
@@ -173,6 +201,9 @@ public extension DropdownAlert {
             let dismissAnimation = POPBasicAnimation(propertyNamed: kPOPLayoutConstraintConstant)
             dismissAnimation?.toValue = -Defaults.Height
             dismissAnimation?.duration = Defaults.AnimationDuration
+			dismissAnimation?.name = DropdownAlert.PresentationType.dismiss.rawValue
+			dismissAnimation?.delegate = DropdownAlert.delegateHandler
+			DropdownAlert.delegateHandler.completion = completion
             animatedConstraint.pop_add(dismissAnimation, forKey: "dropdown-dismiss")
         }
     }
@@ -180,9 +211,14 @@ public extension DropdownAlert {
     /**
      Dismiss the dropdown.
      */
-    public func dismiss() {
-        type(of: self).dismissAlert(self)
+	public func dismiss(completion: DropdownCompletionType? = nil) {
+        type(of: self).dismissAlert(self, completion: completion)
     }
+	
+	@objc fileprivate func dismissInternal() {
+		
+		self.dismiss(completion: DropdownAlert.delegateHandler.completion)
+	}
 }
 
 // MARK: - Helpers
