@@ -75,17 +75,17 @@ open class DropdownAlert: UIView {
     /**
      Class defaults.
      */
-    fileprivate struct Defaults {
-        static var BackgroundColor = UIColor.white
-        static var TextColor = UIColor.black
-        static var Title = "Default Title"
-        static var Message = "Default message!"
-        static var AnimationDuration: Double = 0.25
-        static var Duration: Double = 2
-        static var Height: CGFloat = 90
-        static var TitleFont: UIFont = UIFont.systemFont(ofSize: Defaults.FontSize)
-        static var MessageFont: UIFont = UIFont.systemFont(ofSize: Defaults.FontSize)
-        static var FontSize: CGFloat = 14 {
+    public struct Defaults {
+        public static var BackgroundColor = UIColor.white
+        public static var TextColor = UIColor.black
+        public static var Title = "Default Title"
+        public static var Message = "Default message!"
+        public static var AnimationDuration: Double = 0.25
+        public static var Duration: Double = 2
+        public static var Height: CGFloat = 90
+        public static var TitleFont: UIFont = UIFont.systemFont(ofSize: Defaults.FontSize)
+        public static var MessageFont: UIFont = UIFont.systemFont(ofSize: Defaults.FontSize)
+        public static var FontSize: CGFloat = 14 {
             didSet {
                 TitleFont = TitleFont.withSize(FontSize)
                 MessageFont = MessageFont.withSize(FontSize)
